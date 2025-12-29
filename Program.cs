@@ -68,6 +68,17 @@ namespace Backend
                 };
             });
 
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll",
+                    builder =>
+                    {
+                        builder.AllowAnyOrigin()
+                               .AllowAnyMethod()
+                               .AllowAnyHeader();
+                    });
+            });
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -79,13 +90,105 @@ namespace Backend
 
             app.UseHttpsRedirection();
 
+            app.UseCors("AllowAll");
+
             app.UseAuthentication();
             app.UseAuthorization();
 
 
             app.MapControllers();
 
+            // Seed Database
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                var context = services.GetRequiredService<Backend.Data.UserDbContext>();
+                
+                if (!context.Faculties.Any())
+                {
+                    Console.WriteLine("Seeding Faculties...");
+                    var filePath = Path.Combine(Directory.GetCurrentDirectory(), "faculty table - Sheet1.csv");
+                    if (System.IO.File.Exists(filePath))
+                    {
+                        var lines = System.IO.File.ReadAllLines(filePath);
+                        for (int i = 1; i < lines.Length; i++)
+                        {
+                            var parts = lines[i].Split(',');
+                            if (parts.Length < 8) continue;
+                            context.Faculties.Add(new Backend.Models.Faculty
+                            {
+                                Id = parts[0].Trim(),
+                                Name = parts[1].Trim(),
+                                Email = parts[2].Trim(),
+                                PasswordHash = parts[3].Trim(),
+                                PhoneNumber = parts[4].Trim(),
+                                Department = parts[5].Trim(),
+                                Designation = parts[6].Trim(),
+                                Experience = int.TryParse(parts[7].Trim(), out int exp) ? exp : 0
+                            });
+                        }
+                        context.SaveChanges();
+                        Console.WriteLine($"Seeded {context.Faculties.Count()} faculties.");
+                    }
+                }
+
+                if (!context.Subjects.Any())
+                {
+                    Console.WriteLine("Seeding Subjects...");
+                    var filePath = Path.Combine(Directory.GetCurrentDirectory(), "subjects table - Sheet1 (1).csv");
+                    if (System.IO.File.Exists(filePath))
+                    {
+                        var lines = System.IO.File.ReadAllLines(filePath);
+                        for (int i = 1; i < lines.Length; i++)
+                        {
+                            var parts = ParseCsvLine(lines[i]);
+                            if (parts.Count < 8) continue;
+                            context.Subjects.Add(new Backend.Models.Subject
+                            {
+                                Name = parts[0].Trim(),
+                                Location = parts[1].Trim(),
+                                CoreFocus = parts[2].Trim(),
+                                Prerequisites = parts[3].Trim(),
+                                Duration = int.TryParse(parts[4].Trim(), out int dur) ? dur : 0,
+                                TargetAudience = parts[5].Trim(),
+                                SkillType = parts[6].Trim(),
+                                FacultyName = parts[7].Trim()
+                            });
+                        }
+                        context.SaveChanges();
+                        Console.WriteLine($"Seeded {context.Subjects.Count()} subjects.");
+                    }
+                }
+            }
+
             app.Run();
+        }
+
+        private static List<string> ParseCsvLine(string line)
+        {
+            var result = new List<string>();
+            bool inQuotes = false;
+            string currentField = "";
+
+            for (int i = 0; i < line.Length; i++)
+            {
+                char c = line[i];
+                if (c == '"')
+                {
+                    inQuotes = !inQuotes;
+                }
+                else if (c == ',' && !inQuotes)
+                {
+                    result.Add(currentField);
+                    currentField = "";
+                }
+                else
+                {
+                    currentField += c;
+                }
+            }
+            result.Add(currentField);
+            return result;
         }
     }
 }
