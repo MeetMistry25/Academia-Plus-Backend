@@ -24,6 +24,20 @@ namespace Backend.Controllers
             return await _context.Subjects.ToListAsync();
         }
 
+        // GET: api/Subject/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Subject>> GetSubject(int id)
+        {
+            var subject = await _context.Subjects.FindAsync(id);
+
+            if (subject == null)
+            {
+                return NotFound();
+            }
+
+            return subject;
+        }
+
         // POST: api/Subject/import
         [HttpPost("import")]
         public async Task<IActionResult> ImportSubjects()

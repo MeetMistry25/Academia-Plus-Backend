@@ -11,5 +11,6 @@ namespace Backend.Data
         public DbSet<Backend.Models.User> Users { get; set; }
         public DbSet<Backend.Models.Faculty> Faculties { get; set; }
         public DbSet<Backend.Models.Subject> Subjects { get; set; }
+        public DbSet<Backend.Models.Enrollment> Enrollments { get; set; }
     }
 }

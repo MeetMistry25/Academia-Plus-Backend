@@ -18,4 +18,10 @@ namespace Backend.Models
         public required string Email { get; set; }
         public required string Password { get; set; }
     }
+
+    public class EnrollmentDto
+    {
+        public required string UserEmail { get; set; }
+        public required int CourseId { get; set; }
+    }
 }

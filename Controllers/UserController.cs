@@ -177,5 +177,68 @@ namespace Backend.Controllers
         {
             return _context.Users.Any(e => e.Id == id);
         }
+
+        // POST: api/User/enroll
+        [HttpPost("enroll")]
+        public async Task<IActionResult> Enroll(EnrollmentDto request)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UniEmail == request.UserEmail);
+            if (user == null) return NotFound("User not found");
+
+            var course = await _context.Subjects.FindAsync(request.CourseId);
+            if (course == null) return NotFound("Course not found");
+
+            var existing = await _context.Enrollments.FirstOrDefaultAsync(e => e.UserEmail == request.UserEmail && e.CourseId == request.CourseId);
+            if (existing != null) return BadRequest("Already enrolled");
+
+            var enrollment = new Enrollment
+            {
+                UserEmail = request.UserEmail,
+                CourseId = request.CourseId,
+                Course = course
+            };
+
+            _context.Enrollments.Add(enrollment);
+            await _context.SaveChangesAsync();
+
+            return Ok(enrollment);
+        }
+
+        // GET: api/User/{email}/enrollments
+        [HttpGet("{email}/enrollments")]
+        public async Task<ActionResult<IEnumerable<object>>> GetEnrollments(string email)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UniEmail == email);
+            if (user == null) return NotFound("User not found");
+
+            var enrollments = await _context.Enrollments
+                .Where(e => e.UserEmail == email)
+                .Include(e => e.Course)
+                .Select(e => new {
+                    CourseId = e.CourseId,
+                    Title = e.Course!.Name,
+                    Faculty = e.Course!.FacultyName,
+                    Progress = e.Progress,
+                    Status = e.Status,
+                    NextClass = "Monday 10 AM"
+                })
+                .ToListAsync();
+
+            return enrollments;
+        }
+
+        // GET: api/User/email/{email}
+        [HttpGet("email/{email}")]
+        public async Task<ActionResult<Backend.Models.User>> GetUserByEmail(string email)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UniEmail == email);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            return user;
+        }
     }
 }
