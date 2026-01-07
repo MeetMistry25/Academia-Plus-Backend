@@ -1,4 +1,6 @@
-﻿namespace Backend.Models
+﻿using System.Numerics;
+
+namespace Backend.Models
 {
     public class User
     {
@@ -12,5 +14,6 @@
 
         public required string Branch { get; set; }
         public required string Bio { get; set; }
+        public string enrolledCourses { get; set; } = string.Empty;
     }
 }

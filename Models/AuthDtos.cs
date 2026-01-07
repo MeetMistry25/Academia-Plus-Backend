@@ -9,6 +9,7 @@ namespace Backend.Models
         public required string StudentId { get; set; }
         public required string Branch { get; set; }
         public required string Bio { get; set; }
+        public string enrolledCourses { get; set; } = string.Empty;
     }
 
 

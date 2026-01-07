@@ -59,8 +59,14 @@ namespace Backend.Controllers
                 PhoneNumber = request.PhoneNumber,
                 StudentId = request.StudentId,
                 Branch = request.Branch,
-                Bio = request.Bio
+                Bio = request.Bio,
+                enrolledCourses = request.enrolledCourses
             };
+
+            if (await _context.Users.AnyAsync(u => u.UniEmail == request.UniEmail))
+            {
+                return Conflict("Email already exists.");
+            }
 
             _context.Users.Add(user);
             try
@@ -199,6 +205,16 @@ namespace Backend.Controllers
             };
 
             _context.Enrollments.Add(enrollment);
+
+            if (string.IsNullOrEmpty(user.enrolledCourses))
+            {
+                user.enrolledCourses = request.CourseId.ToString();
+            }
+            else
+            {
+                user.enrolledCourses += $",{request.CourseId}";
+            }
+
             await _context.SaveChangesAsync();
 
             return Ok(enrollment);

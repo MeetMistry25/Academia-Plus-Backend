@@ -60,7 +60,7 @@ namespace Backend.Controllers
                 if (parts.Length < 8) continue;
 
                 var id = parts[0].Trim();
-                if (await _context.Faculties.AnyAsync(f => f.Id == id)) continue;
+                if (await _context.Faculties.AnyAsync(f => f.Id == id || f.Email == parts[2].Trim())) continue;
 
                 var faculty = new Faculty
                 {
